@@ -1,0 +1,12 @@
+Source: ros-kinetic-flexbe-app
+Section: misc
+Priority: extra
+Maintainer: Philipp Schillinger <schillin@kth.se>
+Build-Depends: debhelper (>= 9.0.0), curl, libcurl4-openssl-dev, ros-kinetic-catkin, ros-kinetic-rosunit
+Homepage: http://ros.org/wiki/flexbe_app
+Standards-Version: 3.9.2
+
+Package: ros-kinetic-flexbe-app
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-kinetic-actionlib, ros-kinetic-genpy, ros-kinetic-rospack, ros-kinetic-rospy
+Description: flexbe_app provides a user interface (editor + runtime control) for the FlexBE behavior engine.
