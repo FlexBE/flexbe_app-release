@@ -1,3 +1,26 @@
+## flexbe_app (indigo) - 2.1.2-0
+
+The packages in the `flexbe_app` repository were released into the `indigo` distro by running `/usr/bin/bloom-release --rosdistro indigo --track indigo flexbe_app` on `Tue, 18 Dec 2018 18:25:43 -0000`
+
+The `flexbe_app` package was released.
+
+Version of package(s) in repository `flexbe_app`:
+
+- upstream repository: https://github.com/FlexBE/flexbe_app.git
+- release repository: https://github.com/FlexBE/flexbe_app-release.git
+- rosdistro version: `2.1.0-0`
+- old version: `2.1.0-0`
+- new version: `2.1.2-0`
+
+Versions of tools used:
+
+- bloom version: `0.6.9`
+- catkin_pkg version: `0.4.9`
+- rosdep version: `0.13.0`
+- rosdistro version: `0.7.0`
+- vcstools version: `0.1.40`
+
+
 ## flexbe_app (indigo) - 2.1.0-0
 
 The packages in the `flexbe_app` repository were released into the `indigo` distro by running `/usr/bin/bloom-release --rosdistro indigo --track indigo flexbe_app --edit` on `Sat, 01 Dec 2018 11:55:41 -0000`
