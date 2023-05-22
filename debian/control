@@ -1,0 +1,12 @@
+Source: ros-noetic-flexbe-app
+Section: misc
+Priority: optional
+Maintainer: Philipp Schillinger <schillin@kth.se>
+Build-Depends: debhelper (>= 9.0.0), curl, libcurl4-openssl-dev, ros-noetic-catkin, ros-noetic-rostest <!nocheck>, ros-noetic-rosunit <!nocheck>
+Homepage: http://ros.org/wiki/flexbe_app
+Standards-Version: 3.9.2
+
+Package: ros-noetic-flexbe-app
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libasound2-dev, libnss3-dev, libxss1, ros-noetic-actionlib, ros-noetic-flexbe-mirror, ros-noetic-flexbe-msgs, ros-noetic-flexbe-onboard, ros-noetic-flexbe-widget, ros-noetic-genpy, ros-noetic-rospack, ros-noetic-rospy, ros-noetic-std-msgs
+Description: flexbe_app provides a user interface (editor + runtime control) for the FlexBE behavior engine.
