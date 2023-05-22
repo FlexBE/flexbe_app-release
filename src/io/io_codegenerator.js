@@ -39,7 +39,8 @@ IO.CodeGenerator = new (function() {
 		// generate import lines
 		var import_list = [];
 		for (var i=0; i<imported_states.length; ++i) {
-			if (!UI.Settings.isExplicitStates() && WS.Statelib.isClassUnique(imported_states[i].getStateClass())) {
+			if (imported_states[i] instanceof BehaviorState ||
+				!UI.Settings.isExplicitStates() && WS.Statelib.isClassUnique(imported_states[i].getStateClass())) {
 				import_list.push("from " + imported_states[i].getStateImport() + " import " + imported_states[i].getStateClass());	
 			} else {
 				import_list.push("from " + imported_states[i].getStateImport() + " import " + imported_states[i].getStateClass()
@@ -48,7 +49,7 @@ IO.CodeGenerator = new (function() {
 		}
 		// put together
 		code += "from flexbe_core import Behavior, Autonomy, OperatableStateMachine, ConcurrencyContainer, PriorityContainer, Logger\n";
-		code += import_list.join("\n");
+		code += import_list.sort().join("\n");
 		code += "\n";
 		// add manual imports
 		code += "# Additional imports can be added inside the following tags\n";
@@ -103,6 +104,7 @@ IO.CodeGenerator = new (function() {
 
 			contained_behaviors.push(states[i]);
 		}
+		contained_behaviors.sort(compareKey(be => be.getStatePath()));
 		for (var i=0; i<contained_behaviors.length; ++i) {
 			code += ws+ws+"self.add_behavior(" + contained_behaviors[i].getStateClass() + ", '" + contained_behaviors[i].getStatePath().substr(1) + "')\n";
 		}
@@ -119,6 +121,7 @@ IO.CodeGenerator = new (function() {
 		code += "\n";
 		code += ws+ws+"# Behavior comments:\n\n";
 		var notes = Behavior.getCommentNotes();
+		notes.sort(compareKey(note => note.getContent()));
 		for (var i = 0; i < notes.length; i++) {
 			var n = notes[i];
 			code += ws+ws+"# " + (n.isImportant()? "!" : "O") + " " + Math.round(n.getPosition().x) + " " + Math.round(n.getPosition().y) + " " + n.getContainerPath() + "\n";
@@ -173,6 +176,7 @@ IO.CodeGenerator = new (function() {
 
 		// generate contained state machines
 		var sub_sms = helper_getAllSubSMs(Behavior.getStatemachine());
+		sub_sms.sort(compareKey(sm => sm.getStatePath()));
 		for (var i = sub_sms.length - 1; i >= 0; i--) {
 			code += generateStateMachine(sub_sms[i], true);
 			code += "\n";
@@ -216,11 +220,11 @@ IO.CodeGenerator = new (function() {
 			}
 			code += ws+ws+"# " + pos.join(", ") + "\n";
 			if (sm.isConcurrent()) {
-				code += ws+ws+ sm_name + " = ConcurrencyContainer(outcomes=['" + sm.getOutcomes().join("', '") + "']";
+				code += ws+ws+ sm_name + " = ConcurrencyContainer(outcomes=[" + sm.getOutcomes().map(x => "'" + x + "'").join(", ") + "]";
 			} else if (sm.isPriority()) {
-				code += ws+ws+ sm_name + " = PriorityContainer(outcomes=['" + sm.getOutcomes().join("', '") + "']";
+				code += ws+ws+ sm_name + " = PriorityContainer(outcomes=[" + sm.getOutcomes().map(x => "'" + x + "'").join(", ") + "]";
 			} else {
-				code += ws+ws+ sm_name + " = OperatableStateMachine(outcomes=['" + sm.getOutcomes().join("', '") + "']";
+				code += ws+ws+ sm_name + " = OperatableStateMachine(outcomes=[" + sm.getOutcomes().map(x => "'" + x + "'").join(", ") + "]";
 			}
 			if (sm.getInputKeys().length > 0) {
 				code += ", input_keys=['" + sm.getInputKeys().join("', '") + "']";
@@ -248,6 +252,7 @@ IO.CodeGenerator = new (function() {
 
 		// smach needs to start with initial state
 		var states = sm.getStates();
+		states.sort(compareKey(s => s.getStateName()));
 		var init_trans = sm.getTransitions().findElement(function(element) {
 			return element.getFrom().getStateName() == "INIT";
 		});
@@ -297,15 +302,24 @@ IO.CodeGenerator = new (function() {
 
 		} else if (s instanceof BehaviorState) {
 			var defkeys_str = "";
-			var be_defkeys = s.getDefaultKeys();
-			if (be_defkeys.length > 0) {
-				var be_defkeys_str = []
-				for (var j = 0; j < be_defkeys.length; j++) {
-					be_defkeys_str.push("'"+be_defkeys[j]+"'");
-				}
-				defkeys_str = ", default_keys=[" + be_defkeys_str.join(',') + "]";
+			var be_defkeys_str = [];
+			for (var j = 0; j < s.getInputKeys().length; j++) {
+				if (s.getInputMapping()[j] != undefined) continue;
+				be_defkeys_str.push("'"+s.getInputKeys()[j]+"'");
 			}
-			code += ws+ws+ws+ws+ws+ws+ws+ws+ws+ws+"self.use_behavior(" + s.getStateClass() + ", '" + s.getStatePath().substr(1) + "'" + defkeys_str + "),\n";
+			if (be_defkeys_str.length > 0) {
+				defkeys_str = ",\n"+ws+ws+ws+ws+ws+ws+ws+ws+ws+ws+ws+"default_keys=[" + be_defkeys_str.join(',') + "]";
+			}
+			var params_str = "";
+			var be_params_str = [];
+			for (var j = 0; j < s.getParameters().length; j++) {
+				if (s.getParameterValues()[j] == undefined) continue;
+				be_params_str.push("'"+s.getParameters()[j]+"': "+s.getParameterValues()[j]);
+			}
+			if (be_params_str.length > 0) {
+				params_str = ",\n"+ws+ws+ws+ws+ws+ws+ws+ws+ws+ws+ws+"parameters={" + be_params_str.join(', ') + "}";
+			}
+			code += ws+ws+ws+ws+ws+ws+ws+ws+ws+ws+"self.use_behavior(" + s.getStateClass() + ", '" + s.getStatePath().substr(1) + "'" + defkeys_str + params_str + "),\n";
 
 		} else {
 			var class_key = (!UI.Settings.isExplicitStates() && WS.Statelib.isClassUnique(s.getStateClass()))?
@@ -351,18 +365,21 @@ IO.CodeGenerator = new (function() {
 
 		// remapping
 		if (s.getInputKeys().length + s.getOutputKeys().length > 0) {
-			code += ",\n";
-			code += ws+ws+ws+ws+ws+ws+ws+ws+ws+ws+"remapping={";
 			var remapping_strings = [];
 			for (var j=0; j<s.getInputKeys().length; ++j) {
+				if (s.getInputMapping()[j] == undefined) continue;
 				remapping_strings.push("'" + s.getInputKeys()[j] + "': '" + s.getInputMapping()[j] + "'");
 			}
 			for (var j=0; j<s.getOutputKeys().length; ++j) {
 				if (s.getInputKeys().contains(s.getOutputKeys()[j])) continue;
 				remapping_strings.push("'" + s.getOutputKeys()[j] + "': '" + s.getOutputMapping()[j] + "'");
 			}
-			code += remapping_strings.join(", ");
-			code += "}";
+			if (remapping_strings.length > 0) {
+				code += ",\n";
+				code += ws+ws+ws+ws+ws+ws+ws+ws+ws+ws+"remapping={";
+				code += remapping_strings.join(", ");
+				code += "}";
+			}
 		}
 		
 		code += ")\n\n";
@@ -442,6 +459,19 @@ IO.CodeGenerator = new (function() {
 		});
 
 		return states;
+	}
+
+	var compareKey = function(operation) {
+		return (a, b) => {
+			var a_key = operation(a);
+			var b_key = operation(b);
+			if (a_key < b_key)
+				return -1;
+			else if (a_key > b_key)
+				return 1;
+			else
+				return 0;
+		};
 	}
 
 }) ();

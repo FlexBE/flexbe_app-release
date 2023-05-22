@@ -4,6 +4,7 @@ ROS = new (function() {
 	var os = require('os');
 	var sys = require('sys');
 	var spawn = require('child_process').spawn;
+	var python = 'python' + (process.env.ROS_PYTHON_VERSION != undefined? process.env.ROS_PYTHON_VERSION : '');
 
 ////////////////////////////////
 // BEGIN Python implementation
@@ -25,7 +26,7 @@ rospy.spin()
 	var ros_proc = undefined;
 
 	that.init = function(callback) {
-		ros_proc = spawn('python', ['-c', init_impl]);
+		ros_proc = spawn(python, ['-c', init_impl]);
 		ros_proc.stdout.on('data', data => {
 			data = String(data);
 			if (data.endsWith("connected")) {
@@ -92,42 +93,44 @@ rospy.spin()
 
 	that.getPackagePythonPath = function(package_name, callback) {
 		var python_path = undefined;
+		var temp_package_path = undefined;
 		that.getPackageList((package_cache) => {
 			for (var i=0; i<package_cache.length; i++) {
 				if (package_cache[i]['name'] == package_name) {
 					python_path = package_cache[i]['python_path'];
+					temp_package_path = package_cache[i]['path'];
 					break;
 				}
 			}
-		});
-		if (python_path !== undefined) {
-            process.nextTick(() => {
-                callback(python_path);
-            });
-    	} else {
-			var proc = spawn('python', ['-c', `import importlib; print(importlib.import_module('` + package_name + `').__path__[-1])`]);
-			var path_data = '';
-			proc.stdout.on('data', data => {
-				path_data += data;
-			});
-			proc.stderr.on('data', data => {
-				console.log(package_name+" failed to import: "+data);
-			});
-			proc.on('close', (code) => {
-				if (path_data != "") {
-					python_path = path_data.replace(/\n/g, '');
-					for (var i=0; i<package_cache.length; i++) {
-						if (package_cache[i]['name'] == package_name) {
-							package_cache[i]['python_path'] = python_path;
-							break;
-						}
-					}
+			if (python_path !== undefined) {
+				process.nextTick(() => {
 					callback(python_path);
-				} else {
-					callback(undefined);
-				}
-			});
-		}
+				});
+			} else {
+				var proc = spawn(python, ['-c', `import importlib; temp = importlib.import_module('` + package_name + `').__path__; path_index = next((i for i, x in enumerate(temp) if ('`+ temp_package_path +`' in x)), -1); print(temp[path_index])`]);
+				var path_data = '';
+				proc.stdout.on('data', data => {
+					path_data += data;
+				});
+				proc.stderr.on('data', data => {
+					console.log(package_name+" failed to import: "+data);
+				});
+				proc.on('close', (code) => {
+					if (path_data != "") {
+						python_path = path_data.replace(/\n/g, '');
+						for (var i=0; i<package_cache.length; i++) {
+							if (package_cache[i]['name'] == package_name) {
+								package_cache[i]['python_path'] = python_path;
+								break;
+							}
+						}
+						callback(python_path);
+					} else {
+						callback(undefined);
+					}
+				});
+			}
+		});
 	}
 
 	// that.getParam = function(name, callback) {
