@@ -1,3 +1,26 @@
+## flexbe_app (noetic) - 2.4.1-1
+
+The packages in the `flexbe_app` repository were released into the `noetic` distro by running `/usr/bin/bloom-release --rosdistro noetic --track noetic flexbe_app --edit` on `Mon, 22 May 2023 18:17:53 -0000`
+
+The `flexbe_app` package was released.
+
+Version of package(s) in repository `flexbe_app`:
+
+- upstream repository: https://github.com/FlexBE/flexbe_app.git
+- release repository: unknown
+- rosdistro version: `null`
+- old version: `null`
+- new version: `2.4.1-1`
+
+Versions of tools used:
+
+- bloom version: `0.11.2`
+- catkin_pkg version: `0.5.2`
+- rosdep version: `0.22.2`
+- rosdistro version: `0.9.0`
+- vcstools version: `0.1.42`
+
+
 ## flexbe_app (kinetic) - 2.1.3-0
 
 The packages in the `flexbe_app` repository were released into the `kinetic` distro by running `/usr/bin/bloom-release --rosdistro kinetic --track kinetic flexbe_app` on `Wed, 19 Dec 2018 11:45:49 -0000`
